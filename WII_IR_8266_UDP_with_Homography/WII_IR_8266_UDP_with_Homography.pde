@@ -145,6 +145,8 @@ void setup()
   udp.listen( true );
   
   udp.send( "pull", ip, port );
+  
+  h = new Homography();
 }
 
 void draw()
@@ -158,6 +160,7 @@ void draw()
   centroid[0] = new PVector();
   centroid[1] = new PVector();
   if(str != null) {
+    h.computeHomography(cam, dbRefWidth, dbRefHeight);
     centroid = draw_position();
   
     // get the current time
@@ -167,74 +170,22 @@ void draw()
     // remember current time for the next frame
     prevTime = currTime;
     
-    //println(deltaTime);
-   
-    if(!boolInit)
-    {
-    textSize(60);
-    fill(255, 0, 0);
-    text("Waiting for Initilization", 200, height/2); 
-    }
+    pushMatrix();
+    translate(mouseP.x, mouseP.y);
+    polygon(0, 0, 10, 3);
+    PVector origin = new PVector(mouseP.x, mouseP.y);
+    float d = PVector.dist(origin, centroid[0]);
+    float a = PVector.angleBetween(origin, centroid[0]);
+    popMatrix();
+    pushMatrix();
+    translate(centroid[0].x, centroid[0].y);
+    textSize(20);
+    fill(255, 255, 0);
+    text(d + "," + a, 0, -40);
+    popMatrix();
+    String strMessage = str(d) + "\n";
+    udp.send(strMessage, "192.168.1", 6000);
     
-    if(boolInit)
-    {
-      //compute homography 
-      h = new Homography();
-      h.computeHomography(cam, dbRefWidth, dbRefHeight);
-      textSize(16);
-      fill(0, 255, 50);
-      text("Homography Matix", 1030, 200); 
-      
-      //show Homography matrix value
-      textSize(12);
-      fill(0, 100, 255);
-      for(int i = 0; i < 3; i++)
-      text((float)matrixH.get(i,0) + "  ,  " + (float)matrixH.get(i,1) + "  ,  " + (float)matrixH.get(i,2) , 1030, 230 + (i*30)); 
-      
-      boolCalib = true;
-      boolClicked = false;
-    }
-    
-   /* if(boolCalib)
-    {
-      PVector[] centroid = new PVector[2];
-      if(str != null) centroid = draw_position();
-        pushMatrix();
-        translate(mouseP.x, mouseP.y);
-        polygon(0, 0, 10, 3);
-        PVector origin = new PVector(mouseP.x, mouseP.y);
-        PVector mouseTMP = new PVector(0,0);
-        mouseTMP = new PVector(mouseX, mouseY);
-        float d = PVector.dist(origin, mouseTMP);
-        float a = PVector.angleBetween(origin, mouseTMP);
-        popMatrix();
-        pushMatrix();
-        translate(mouseX, mouseY);
-        textSize(20);
-        fill(255, 255, 0);
-        text(d + "," + a, 0, -40);
-        popMatrix();
-    }*/
-    
-    if(boolCalib)
-    {
-          h.computeHomography(cam, dbRefWidth, dbRefHeight);
-          pushMatrix();
-          translate(mouseP.x, mouseP.y);
-          polygon(0, 0, 10, 3);
-          PVector origin = new PVector(mouseP.x, mouseP.y);
-          float d = PVector.dist(origin, centroid[0]);
-          float a = PVector.angleBetween(origin, centroid[0]);
-          popMatrix();
-          pushMatrix();
-          translate(centroid[0].x, centroid[0].y);
-          textSize(20);
-          fill(255, 255, 0);
-          text(d + "," + a, 0, -40);
-          popMatrix();
-          string strMessage = str(d) + "\n";
-          udp.send(strMessage, "192.168.1", 6000);
-    }
   }
 }
 
@@ -277,11 +228,10 @@ public PVector[] draw_position()
     int www = abs(splitStr[7] - 1023);
     int zzz = abs(splitStr[8] - 1023);
     
-    
-    temp[0] = new PVector(xx,yy);
-    temp[1] = new PVector(ww,zz);
-    temp[2] = new PVector(xxx,yyy);
-    temp[3] = new PVector(www,zzz);
+    temp[0] = h.applyHomography(new PVector(xx,yy));
+    temp[1] = h.applyHomography(new PVector(ww,zz)); 
+    temp[2] = h.applyHomography(new PVector(xxx,yyy)); 
+    temp[3] = h.applyHomography(new PVector(www,zzz)); 
     
     
     for(int i = 0; i < temp.length; i++)
