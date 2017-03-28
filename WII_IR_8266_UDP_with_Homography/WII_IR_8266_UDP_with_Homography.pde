@@ -160,7 +160,7 @@ void draw()
   centroid[0] = new PVector();
   centroid[1] = new PVector();
   if(str != null) {
-    h.computeHomography(cam, dbRefWidth, dbRefHeight);
+    
     centroid = draw_position();
   
     // get the current time
@@ -227,6 +227,14 @@ public PVector[] draw_position()
     
     int www = abs(splitStr[7] - 1023);
     int zzz = abs(splitStr[8] - 1023);
+    
+    cam[0] = new PVector(xx,yy);
+    cam[1] = new PVector(ww,zz);
+    cam[2] = new PVector(xxx,yyy);
+    cam[3] = new PVector(www,zzz);
+    
+    
+    h.computeHomography(cam, dbRefWidth, dbRefHeight);
     
     temp[0] = h.applyHomography(new PVector(xx,yy));
     temp[1] = h.applyHomography(new PVector(ww,zz)); 
